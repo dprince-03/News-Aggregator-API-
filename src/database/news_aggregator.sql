@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXIST news_aggregator;
+CREATE DATABASE IF NOT EXISTS news_aggregator;
 USE news_aggregator;
 
 CREATE TABLE users(
@@ -7,18 +7,18 @@ CREATE TABLE users(
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE user_preferences(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT,
+    user_id INT UNIQUE,
     preferred_sources JSON,
     preferred_categories JSON,
     preferred_authors JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE articles(
@@ -30,11 +30,14 @@ CREATE TABLE articles(
     source_name VARCHAR(255),
     category VARCHAR(100),
     published_at DATETIME,
-    url VARCHAR(255),
-    url_to_image VARCHAR(255),
+    url VARCHAR(512) UNIQUE,
+    url_to_image VARCHAR(512),
     source_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_source (source_name),
+    INDEX idx_category (category),
+    INDEX idx_published (published_at)
 );
 
 CREATE TABLE saved_articles(
@@ -44,4 +47,5 @@ CREATE TABLE saved_articles(
     saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_save (user_id, article_id)
 );
