@@ -10,7 +10,7 @@ const Article = sequelize.define(
 			autoIncrement: true,
 		},
 		title: {
-			tyoe: DataTypes.TEXT,
+			type: DataTypes.TEXT,
 			allowNull: false,
 			validate: {
 				notNull: {
@@ -37,7 +37,7 @@ const Article = sequelize.define(
 		},
 		source_name: {
 			type: DataTypes.STRING(255),
-			allowNull: true,
+			allowNull: false,
 		},
 		category: {
 			type: DataTypes.STRING(100),
@@ -45,10 +45,10 @@ const Article = sequelize.define(
 		},
 		published_at: {
 			type: DataTypes.DATE,
-			allowNull: true,
+			allowNull: false,
 		},
 		url: {
-			type: DataTypes.STRING(2048),
+			type: DataTypes.STRING(512),
 			allowNull: true,
 			unique: {
 				args: true,
@@ -63,7 +63,7 @@ const Article = sequelize.define(
 			},
 		},
 		url_to_image: {
-			type: DataTypes.STRING(2048),
+			type: DataTypes.STRING(512),
 			allowNull: true,
 			validate: {
 				isUrl: {
@@ -113,6 +113,25 @@ const Article = sequelize.define(
 	},
 );
 
+// Search articles by keyword
+Article.searchArticles = async function(keyword, options = {}) {
+    const { limit = 20, offset = 0 } = options;
+    
+    return await Article.findAndCountAll({
+        where: {
+            [Op.or]: [
+                { title: { [Op.like]: `%${keyword}%` } },
+                { description: { [Op.like]: `%${keyword}%` } },
+                { content: { [Op.like]: `%${keyword}%` } }
+            ]
+        },
+        order: [["published_at", "DESC"]],
+        limit,
+        offset,
+    });
+};
+
+
 // filter articles
 Article.filterArticles = async function (filters = {}, options = {}) {
 	const { limit = 20, offset = 0 } = options;
@@ -151,6 +170,7 @@ Article.filterArticles = async function (filters = {}, options = {}) {
 		offset,
 	});
 };
+
 
 // get personalized articles based on preferences
 Article.getPersonalizedArticles = async function (preferences, options = {}) {
