@@ -49,3 +49,9 @@ CREATE TABLE saved_articles(
     FOREIGN KEY (article_id) REFERENCES articles(id) ON DELETE CASCADE,
     UNIQUE KEY unique_save (user_id, article_id)
 );
+
+ALTER TABLE users 
+ADD COLUMN google_id VARCHAR(255) UNIQUE,
+ADD COLUMN facebook_id VARCHAR(255) UNIQUE,
+ADD COLUMN twitter_id VARCHAR(255) UNIQUE,
+ADD COLUMN profile_picture VARCHAR(512);

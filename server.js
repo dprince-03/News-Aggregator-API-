@@ -35,18 +35,18 @@ const limiter = rateLimit({
 });
 
 const helmetConfig = {
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrce: ["'self'", 'https:', "'unsafe-inline'"],
-            scriptSrc: ["'self'", 'https:', "'unsafe-inline'"],
-            imgSrc: ["'self'", 'data:', 'https:'],
-            connectSrc: ["'self'", 'https:'],
-            fontSrc: ["'self'", 'https:', 'data:'],
-            objectSrc: ["'none'"],
-            upgradeInsecureRequests: [],
-        },
-    },
+	contentSecurityPolicy: {
+		directives: {
+			defaultSrc: ["'self'"],
+			styleSrce: ["'self'", "https:", "'unsafe-inline'"],
+			scriptSrc: ["'self'", "https:", "'unsafe-inline'"],
+			imgSrc: ["'self'", "data:", "https:"],
+			connectSrc: ["'self'", "https:"],
+			fontSrc: ["'self'", "https:", "data:"],
+			objectSrc: ["'none'"],
+			upgradeInsecureRequests: [],
+		},
+	},
 };
 
 // ✅ Temporary debug middleware
