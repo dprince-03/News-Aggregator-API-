@@ -5,17 +5,20 @@ const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
+const { contentSecurityPolicy, default: helmet } = require('helmet');
 
-const { initializeDatabase, healthCheck, getConnectionStatus, closeConnection } = require('./src/config/db.config');
+const { testConnection, closeConnection } = require('./src/config/db.config');
+
 
 const app = express();
 const PORT = process.env.PORT || 5080
 
+app.set('trust-proxy', 1); // trust first proxy if behind a proxy like Nginx
+
 // ========================
 //      MIDDLEWARES
 // ========================
-
-const corsOption = {
+const corsConfig = {
     origin: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:5000', 'http://localhost:5080'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
@@ -31,7 +34,20 @@ const limiter = rateLimit({
     legacyHeaders: false,
 });
 
-app.use(cors(corsOption));
+const helmetConfig = {
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrce: ["'self'", 'https:', "'unsafe-inline'"],
+            scriptSrc: ["'self'", 'https:', "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:', 'https:'],
+            connectSrc: ["'self'", 'https:'],
+            fontSrc: ["'self'", 'https:', 'data:'],
+            objectSrc: ["'none'"],
+            upgradeInsecureRequests: [],
+        },
+    },
+};
 
 // ✅ Temporary debug middleware
 app.use((req, res, next) => {
@@ -41,6 +57,8 @@ app.use((req, res, next) => {
     next();
 }); // remove later
 
+app.use(cors(corsConfig));
+app.use(helmet(helmetConfig));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
@@ -58,10 +76,31 @@ app.use((req, res, next) => {
 // ========================
 //      ROUTES
 // ========================
+// health check
+app.get('/', (req, res) => {
+    res.status(200).json({
+        success: true,
+        message: 'News Aggregator API is running',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        // environment: process.env.NODE_ENV || 'development',
+    });
+});
 
 // ========================
 //      ERROR HANDLING
 // ========================
+// 404 handler
+app.use((req, res, next) => {
+    res.status(404).json({
+        success: false,
+        message: 'Resource not found',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+    });
+});
+
+// Global error handler
 app.use((err, req, res, next) => {
     console.error(`Error ${err}`);
     
@@ -76,7 +115,6 @@ app.use((err, req, res, next) => {
 // ========================
 //      SERVER SETUP
 // ========================
-
 const start_server = async () => {
     try {
         console.log('');
@@ -85,23 +123,13 @@ const start_server = async () => {
         console.log('='.repeat(50));
         console.log('');
 
-        const dbConnection = await initializeDatabase();
-
-        if (!dbConnection) {
-            console.error('💥 Cannot start server without database connection');
+        // Initialize database
+        const dbconnect = await testConnection();
+        if (!dbconnect) {
+            console.error("❌ Failed to connect to database");
+            console.error("Please check your database configuration in .env file");
             process.exit(1);
         }
-
-        // Health check endpoint
-        app.get('/health', async (req, res) => {
-            const health = await healthCheck();
-            res.json(health);
-        });
-
-        // Database status endpoint
-        app.get('/db-status', (req, res) => {
-            res.json(getConnectionStatus());
-        });
 
         const server = app.listen(PORT, () => {
             console.log('');
