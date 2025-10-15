@@ -6,7 +6,11 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "secrets:generate": "node src/utils/secrets.utils.js generate",
+    "secrets:validate": "node src/utils/secrets.utils.js validate",
+    "secrets:backup": "node src/utils/secrets.utils.js backup",
+    "secrets:force": "node src/utils/secrets.utils.js force"
   },
   "repository": {
     "type": "git",

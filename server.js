@@ -3,11 +3,13 @@ const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
+const passport = require('passport');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
 const { contentSecurityPolicy, default: helmet } = require('helmet');
 
 const { testConnection, closeConnection } = require('./src/config/db.config');
+const { notFound, errorHandler } = require('./src/middleware/errorHandler.middleware');
 
 
 const app = express();
@@ -49,6 +51,17 @@ const helmetConfig = {
 	},
 };
 
+const sessionConfig = {
+	secret: process.env.SESSION_SECRET || "your_session_secret",
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		secure: process.env.NODE_ENV === "production",
+		httpOnly: true,
+		maxAge: 24 * 60 * 60 * 1000, // 24 hours
+	},
+};
+
 // ✅ Temporary debug middleware
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
@@ -57,14 +70,19 @@ app.use((req, res, next) => {
     next();
 }); // remove later
 
-app.use(cors(corsConfig));
 app.use(helmet(helmetConfig));
+app.use(cors(corsConfig));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(session(sessionConfig));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use(cookieParser());
 app.use(morgan('dev'));
 
-// Security headers middleware
+// ========================================
+//      Security headers middleware
+// ========================================
 app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -90,6 +108,10 @@ app.get('/', (req, res) => {
 // ========================
 //      ERROR HANDLING
 // ========================
+
+app.use(notFound);
+app.use(errorHandler);
+
 // 404 handler
 app.use((req, res, next) => {
     res.status(404).json({
