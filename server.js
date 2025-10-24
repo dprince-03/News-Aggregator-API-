@@ -2,11 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 const morgan = require('morgan');
 const passport = require('passport');
 const rateLimit = require('express-rate-limit');
 const session = require('express-session');
-const { contentSecurityPolicy, default: helmet } = require('helmet');
 
 const { testConnection, closeConnection } = require('./src/config/db.config');
 const { notFound, errorHandler } = require('./src/middleware/errorHandler.middleware');
@@ -101,38 +101,15 @@ app.get('/', (req, res) => {
         message: 'News Aggregator API is running',
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        // environment: process.env.NODE_ENV || 'development',
+        environment: process.env.NODE_ENV || 'development',
     });
 });
 
 // ========================
 //      ERROR HANDLING
 // ========================
-
 app.use(notFound);
 app.use(errorHandler);
-
-// 404 handler
-app.use((req, res, next) => {
-    res.status(404).json({
-        success: false,
-        message: 'Resource not found',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-    });
-});
-
-// Global error handler
-app.use((err, req, res, next) => {
-    console.error(`Error ${err}`);
-    
-    res.status(500).json({
-        success: false,
-        message: 'Internal Server Error',
-        error: err.name && err.message,
-        stack: err.stack,
-    });
-});
 
 // ========================
 //      SERVER SETUP
@@ -141,14 +118,14 @@ const start_server = async () => {
     try {
         console.log('');
         console.log('='.repeat(50));
-        console.log("🚀 Starting News Aggregator API...");
+        console.log("Starting News Aggregator API...");
         console.log('='.repeat(50));
         console.log('');
 
         // Initialize database
         const dbconnect = await testConnection();
         if (!dbconnect) {
-            console.error("❌ Failed to connect to database");
+            console.error("Failed to connect to database");
             console.error("Please check your database configuration in .env file");
             process.exit(1);
         }
@@ -156,16 +133,16 @@ const start_server = async () => {
         const server = app.listen(PORT, () => {
             console.log('');
             console.log('='.repeat(50));
-            console.log(`✅ Server is running on port ${PORT}`);
-            console.log(`✅ API URL: http://localhost:${PORT}/api`);
+            console.log(`Server is running on port ${PORT}`);
+            console.log(`API URL: http://localhost:${PORT}/api`);
             console.log('='.repeat(50));
             console.log('');
-            console.log('📡 Server Information:');
+            console.log('Server Information:');
             console.log(`   Base URL:        http://localhost:${PORT}`);
             console.log(`   API URL:         http://localhost:${PORT}/api`);
             console.log('');
 
-            console.log('💡 Tips:');
+            console.log('Tips:');
             console.log('   - Use Postman or curl to test the API');
             console.log('   - Check /api for complete endpoint list');
             console.log('');
@@ -179,20 +156,20 @@ const start_server = async () => {
         const shutdown = async (signal) => {
             console.log('');
             console.log('='.repeat(50));
-            console.log(`⚠️  ${signal} received. Shutting down gracefully...`);
+            console.log(`${signal} received. Shutting down gracefully...`);
             console.log('='.repeat(50));
 
             server.close(async () => {
                 console.log('');
-                console.log('✅ HTTP server closed');
+                console.log('HTTP server closed');
                 
                 // Close database connections
-                console.log('🔄 Closing database connections...');
+                console.log('Closing database connections...');
                 await closeConnection();
 
-                console.log('✅ All connections closed');
+                console.log('All connections closed');
                 console.log('');
-                console.log('👋 Goodbye!');
+                console.log('Goodbye!');
                 console.log('');
                 process.exit(0);
             });
@@ -200,7 +177,7 @@ const start_server = async () => {
             // Force close after 10 seconds
             setTimeout(() => {
             console.error('');
-            console.error('⚠️  Forcing server shutdown after timeout...');
+            console.error('Forcing server shutdown after timeout...');
             console.error('');
             process.exit(1);
             }, 10000);
@@ -213,7 +190,7 @@ const start_server = async () => {
         // Handle uncaught exceptions
         process.on('uncaughtException', (err) => {
             console.error('');
-            console.error('❌ Uncaught Exception:', err);
+            console.error('Uncaught Exception:', err);
             console.error('');
             shutdown('UNCAUGHT_EXCEPTION');
         });
@@ -221,8 +198,8 @@ const start_server = async () => {
         // Handle unhandled promise rejections
         process.on('unhandledRejection', (reason, promise) => {
             console.error('');
-            console.error('❌ Unhandled Rejection at:', promise);
-            console.error('❌ Reason:', reason);
+            console.error('Unhandled Rejection at:', promise);
+            console.error('Reason:', reason);
             console.error('');
             shutdown('UNHANDLED_REJECTION');
         });
@@ -230,7 +207,7 @@ const start_server = async () => {
     } catch (error) {
         console.error('');
         console.error('='.repeat(60));
-        console.error('❌ Failed to start server');
+        console.error('Failed to start server');
         console.error('='.repeat(60));
         console.error('');
         console.error('Error:', error.message);
@@ -240,3 +217,5 @@ const start_server = async () => {
 };
 
 start_server();
+
+module.exports = app;
