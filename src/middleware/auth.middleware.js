@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
+
 const { User } = require('../models/user.models');
 const authConfig = require('../config/auth.config');
 
@@ -115,7 +116,7 @@ const verifyResetToken = (token) => {
         return decoded;
     } catch (error) {
         throw new Error("Invalid or expired reset token");
-    }
+    };
 };
 
 const authorize = (...roles) => {

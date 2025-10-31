@@ -10,6 +10,7 @@ const session = require('express-session');
 
 const { testConnection, closeConnection } = require('./src/config/db.config');
 const { notFound, errorHandler } = require('./src/middleware/errorHandler.middleware');
+const authRouter = require('./src/routes/auth.routes');
 
 
 const app = express();
@@ -94,8 +95,10 @@ app.use((req, res, next) => {
 // ========================
 //      ROUTES
 // ========================
+app.use('/api', limiter);
+
 // health check
-app.get('/', limiter, (req, res) => {
+app.get('/api/health', (req, res) => {
     res.status(200).json({
         success: true,
         message: 'News Aggregator API is running',
@@ -104,6 +107,8 @@ app.get('/', limiter, (req, res) => {
         environment: process.env.NODE_ENV || 'development',
     });
 });
+
+app.use('/api', authRouter);
 
 // ========================
 //      ERROR HANDLING
