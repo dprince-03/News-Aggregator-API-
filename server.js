@@ -62,7 +62,7 @@ const sessionConfig = {
 	},
 };
 
-// ✅ Temporary debug middleware
+//Temporary debug middleware
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.path}`);
     console.log('Body:', req.body);
@@ -95,7 +95,7 @@ app.use((req, res, next) => {
 //      ROUTES
 // ========================
 // health check
-app.get('/', (req, res) => {
+app.get('/', limiter, (req, res) => {
     res.status(200).json({
         success: true,
         message: 'News Aggregator API is running',

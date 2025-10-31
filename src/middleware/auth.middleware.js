@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const passport = require('passport');
-const { User } = require('../models');
+const { User } = require('../models/user.models');
 const authConfig = require('../config/auth.config');
 
 // Middleware to verify JWT token
